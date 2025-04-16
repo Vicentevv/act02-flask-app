@@ -1,76 +1,51 @@
-import requests
 from flask import Flask
 from datetime import datetime
-import csv
-from io import StringIO
+import requests
 
-# Descargamos el contenido al iniciar el programa
-url = "https://gist.githubusercontent.com/reroes/502d11c95f1f8a17d300ece914464c57/raw/872172ebb60e22e95baf8f50e2472551f49311ff/gistfile1.txt"
-response = requests.get(url)
-
-if response.status_code == 200:
-    print("Contenido descargado:")
-    print(response.text)
-else:
-    print(f"Error al acceder a la URL: {response.status_code}")
-
-# Creamos la app Flask
-app = Flask(__name__)
-
-# Descargar y procesar el archivo desde la URL
-url = "https://gist.githubusercontent.com/reroes/502d11c95f1f8a17d300ece914464c57/raw/872172ebb60e22e95baf8f50e2472551f49311ff/gistfile1.txt"
-response = requests.get(url)
-
-personas_filtradas = []
-
-if response.status_code == 200:
-    contenido = response.text
-    f = StringIO(contenido)
-    lector_csv = csv.DictReader(f)
-
-    # Filtrar IDs que empiezan con 3, 4, 5 o 7
-    for fila in lector_csv:
-        if fila['id'][0] in ['3', '4', '5', '7']:
-            personas_filtradas.append(fila)
-else:
-    print("Error al descargar el archivo:", response.status_code)
-
+app = Flask(_name_)
 
 @app.route('/')
 def home():
+    # URL del archivo .txt
+    url = 'https://gist.githubusercontent.com/reroes/502d11c95f1f8a17d300ece914464c57/raw/872172ebb60e22e95baf8f50e2472551f49311ff/gistfile1.txt'
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        return f"<h3>Error al leer el archivo: {e}</h3>"
+
+    personas_filtradas = []
+    lineas = response.text.strip().split('\n')
+
+    # Ignorar encabezado
+    encabezado = lineas[0].split('|')
+    for linea in lineas[1:]:
+        partes = linea.split('|')
+        if partes and partes[0][0] in {'3', '4', '5', '7'}:
+            personas_filtradas.append(partes)
+
+    # Construir la tabla HTML
+    tabla = "<table border='1' cellpadding='5'><tr>"
+    for col in encabezado:
+        tabla += f"<th>{col}</th>"
+    tabla += "</tr>"
+
+    for persona in personas_filtradas:
+        tabla += "<tr>" + "".join(f"<td>{dato}</td>" for dato in persona) + "</tr>"
+    tabla += "</table>"
+
+    # Agregar la fecha actual
     actual = datetime.now()
-    fecha_formateada = actual.strftime("%d, %B, %Y, %M, %H, %S")
-    return f'¡Hola, LOJA capital cultural! <b>{fecha_formateada}</b>'
+    fecha_formateada = actual.strftime("%d %B %Y, %H:%M:%S")
 
-
-@app.route('/personas')
-def mostrar_personas():
-    if not personas_filtradas:
-        return "No hay datos disponibles o hubo un error al descargar."
-
-    tabla_html = """
-    <h2>Personas con ID que comienza en 3, 4, 5 o 7</h2>
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Edad</th>
-        </tr>
+    html = f"""
+    <h2>¡Hola, Loja, cuna de artistas!</h2>
+    <p><b>{fecha_formateada}</b></p>
+    <h3>Personas con ID que inicia con 3, 4, 5 o 7:</h3>
+    {tabla}
     """
-    for p in personas_filtradas:
-        tabla_html += f"""
-        <tr>
-            <td>{p['id']}</td>
-            <td>{p['nombre']}</td>
-            <td>{p['edad']}</td>
-        </tr>
-        """
+    return html
 
-    tabla_html += "</table>"
-    return tabla_html
-
-
-# Ejecutamos el servidor
-if __name__ == '__main__':
+if _name_ == '_main_':
     app.run(host='0.0.0.0', port=5000)
-
