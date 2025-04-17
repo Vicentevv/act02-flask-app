@@ -40,7 +40,8 @@ def home():
     fecha_formateada = actual.strftime("%d %B %Y, %H:%M:%S")
 
     html = f"""
-    <h2>¡Hola, Loja, cuna de artistas!</h2>
+    <h2>Vicente Alexander Valdivieso Jaramillo</h2>
+    <h2>¡Hola, Loja, Capital cultural!</h2>
     <p><b>{fecha_formateada}</b></p>
     <h3>Personas con ID que inicia con 3, 4, 5 o 7:</h3>
     {tabla}
